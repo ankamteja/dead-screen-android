@@ -78,7 +78,12 @@ if ! bouncer; then
     exit 1
 fi
 
-# 4. Digits. The bouncer ignores `input text`; it only accepts raw keycodes.
+# 4. Clear whatever is already in the field first. A half-typed PIN left there by
+#    someone poking at a dead panel makes our digits append to theirs, and the only
+#    symptom is a bogus "wrong PIN" -- while burning a real failed attempt each time.
+for _ in $(seq 1 12); do dsh input keyevent 67 >/dev/null 2>&1; done   # KEYCODE_DEL
+
+# 5. Digits. The bouncer ignores `input text`; it only accepts raw keycodes.
 #    KEYCODE_0=7 .. KEYCODE_9=16, so keycode = digit + 7.
 for (( i=0; i<${#PIN}; i++ )); do
     dsh input keyevent $(( ${PIN:$i:1} + 7 )) >/dev/null 2>&1
@@ -86,7 +91,7 @@ done
 dsh input keyevent 66 >/dev/null 2>&1         # Enter, for PINs that do not auto-submit
 sleep 2
 
-# 5. Verify rather than assume.
+# 6. Verify rather than assume.
 if locked; then
     echo "[unlock] FAILED: still locked -- wrong PIN?"
     exit 1
