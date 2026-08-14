@@ -10,6 +10,8 @@ you plug in, survives the USB dropouts a damaged port produces, and gets you pas
 even though **the lock screen is invisible in the mirror** (see [Why the lock screen is
 black](#why-the-lock-screen-is-black)).
 
+![Unlocking a phone with a dead display, and tapping a button on a screen that renders black](docs/demo.gif)
+
 Tested on a Galaxy S25 (`SM-S931B`, Android 16) with Fedora 43 and scrcpy 4.1.
 
 ## Requirements
