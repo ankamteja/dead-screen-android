@@ -1,0 +1,15 @@
+[Unit]
+Description=Auto-open the phone mirror whenever the device is connected
+PartOf=graphical-session.target
+After=graphical-session.target
+
+[Service]
+Type=simple
+# %h is your home directory. Adjust the path if you cloned this elsewhere.
+ExecStart=%h/tools/scrcpy/s25-watch.sh
+# Set AUTO_UNLOCK=1 (see README) to have it type the PIN on every connect.
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=graphical-session.target
