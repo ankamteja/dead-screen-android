@@ -61,10 +61,15 @@ fi
 # 2. Raise the PIN pad. The keyguard shade sits above it; until it is swiped away
 #    the digits land nowhere and nothing tells you so. Retry -- the swipe is
 #    occasionally eaten while the shade is still animating in.
-for _ in 1 2 3; do
+# On Samsung the woken lock screen focuses NotificationShade, and the swipe promotes
+# it to Bouncer -- but that transition takes about two seconds. Re-checking after only
+# one second reports "could not raise the PIN pad" on a screen that was about to be
+# ready, so give each attempt time to land before deciding it failed.
+for _ in 1 2 3 4; do
     bouncer && break
+    dsh input keyevent 224 >/dev/null 2>&1        # re-wake: the panel can sleep mid-retry
     dsh input swipe 540 2000 540 800 200 >/dev/null 2>&1
-    sleep 1
+    sleep 2
 done
 if ! bouncer; then
     dsh input keyevent 82 >/dev/null 2>&1     # KEYCODE_MENU, older fallback
