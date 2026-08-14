@@ -7,3 +7,6 @@ s25-serial
 s25-pin
 *.mp4
 *.png
+
+# fetched by the user per README; upstream artifact
+SHA256SUMS.txt
