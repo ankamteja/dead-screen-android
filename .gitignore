@@ -1,0 +1,9 @@
+# upstream scrcpy prebuilt -- not ours to redistribute, and it is 17MB
+scrcpy-linux-x86_64-*/
+scrcpy-linux-x86_64-*.tar.gz
+
+# anything device- or user-specific must never be committed
+s25-serial
+s25-pin
+*.mp4
+*.png
