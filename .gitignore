@@ -8,5 +8,11 @@ s25-pin
 *.mp4
 *.png
 
+# accessibility dumps contain whatever was on screen at the time
+*ui*.xml
+
+# local tooling state, including git worktrees created inside the repo
+.claude/
+
 # fetched by the user per README; upstream artifact
 SHA256SUMS.txt
