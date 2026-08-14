@@ -44,63 +44,10 @@ fi
 dsh cat "$REMOTE" > "$LOCAL" 2>/dev/null
 [ -s "$LOCAL" ] || { echo "[tap] empty dump"; exit 1; }
 
-# Prints either a listing (no target text) or a single "x y" line to tap.
-out=$(python3 - "$LOCAL" "$want" "$first" "$clickonly" <<'PY'
-import re, sys, xml.etree.ElementTree as ET
-
-path, want, first, clickonly = sys.argv[1], sys.argv[2], sys.argv[3] == "1", sys.argv[4] == "1"
-try:
-    root = ET.parse(path).getroot()
-except ET.ParseError as e:
-    sys.exit(f"[tap] could not parse the dump: {e}")
-
-items = []
-for n in root.iter("node"):
-    label = (n.get("text") or n.get("content-desc") or "").strip()
-    if not label:
-        continue
-    if clickonly and n.get("clickable") != "true":
-        continue
-    m = re.match(r"\[(\d+),(\d+)\]\[(\d+),(\d+)\]", n.get("bounds", ""))
-    if not m:
-        continue
-    x1, y1, x2, y2 = map(int, m.groups())
-    items.append((label, (x1 + x2) // 2, (y1 + y2) // 2, n.get("clickable") == "true"))
-
-# A label often appears on both a node and its parent, at the same centre. Those are
-# one button, not two -- collapsing them keeps the ambiguity check meaningful instead
-# of firing on every nested view.
-seen, unique = set(), []
-for label, x, y, click in items:
-    key = (label.lower(), x, y)
-    if key in seen:
-        continue
-    seen.add(key)
-    unique.append((label, x, y, click))
-items = unique
-
-if not items:
-    sys.exit("[tap] nothing with a label on screen")
-
-if not want:
-    for label, x, y, click in items:
-        print(f"  {'*' if click else ' '} {label[:58]:<58} tap {x},{y}")
-    print('\n  (* = clickable)   tap one with:  s25-tap.sh "<text>"')
-    sys.exit(0)
-
-hits = [i for i in items if want.lower() in i[0].lower()]
-if not hits:
-    sys.exit(f"[tap] no match for {want!r}. Run with no arguments to see what is on screen.")
-if len(hits) > 1 and not first:
-    print(f"[tap] {len(hits)} matches for {want!r} -- refusing to guess. Use -a, or be more specific:")
-    for label, x, y, _ in hits:
-        print(f"    {label[:58]:<58} tap {x},{y}")
-    sys.exit(1)
-
-label, x, y, _ = hits[0]
-print(f"TAP {x} {y} {label[:58]}")
-PY
-) || { echo "$out"; exit 1; }
+# Prints either a listing (no target text) or a single "TAP x y label" line.
+# The matching rules live in lib/parse-ui.py so they can be tested without a phone.
+out=$(python3 "$HERE/lib/parse-ui.py" "$LOCAL" "$want" "$first" "$clickonly") \
+    || { echo "$out"; exit 1; }
 
 case "$out" in
     TAP\ *)

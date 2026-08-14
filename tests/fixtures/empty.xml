@@ -1,0 +1,6 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!-- Valid dump with nothing labelled on screen. Distinct from an unparseable dump:
+     one means "the screen has no buttons", the other means "the dump failed". -->
+<hierarchy rotation="0">
+  <node text="" content-desc="" clickable="false" bounds="[0,0][1080,2340]"/>
+</hierarchy>

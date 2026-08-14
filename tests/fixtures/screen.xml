@@ -1,0 +1,18 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!-- Shape taken from a real uiautomator dump, with the labels replaced.
+     Covers the cases that actually bite:
+       - a label carried by BOTH a node and its parent, at the same centre (one button)
+       - two labels that share a prefix at DIFFERENT positions (genuinely ambiguous)
+       - a node with no label at all
+       - a node whose bounds attribute is malformed -->
+<hierarchy rotation="0">
+  <node text="" content-desc="Camera" clickable="false" bounds="[400,2000][680,2120]">
+    <node text="Camera" content-desc="" clickable="true" bounds="[400,2000][680,2120]"/>
+  </node>
+  <node text="Page 1 of 3." content-desc="" clickable="true" bounds="[500,1860][530,1900]"/>
+  <node text="Page 2 of 3." content-desc="" clickable="true" bounds="[550,1860][580,1900]"/>
+  <node text="Use PIN" content-desc="" clickable="true" bounds="[395,1452][686,1530]"/>
+  <node text="PhonePe is locked" content-desc="" clickable="false" bounds="[30,920][1050,1064]"/>
+  <node text="" content-desc="" clickable="true" bounds="[0,0][1080,100]"/>
+  <node text="Broken bounds" content-desc="" clickable="true" bounds="not-a-rect"/>
+</hierarchy>

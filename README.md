@@ -34,15 +34,44 @@ Tested on a Galaxy S25 (`SM-S931B`, Android 16) with Fedora 43 and scrcpy 4.1.
 No device serial is hardcoded. With one phone attached everything auto-detects; with several, run
 `echo <serial> > ~/.config/s25-serial` or set `$S25_SERIAL`.
 
+## Install
+
+```bash
+./install.sh            # check dependencies, then install and enable the service
+./install.sh --check    # dependency check only, changes nothing
+./install.sh --uninstall
+```
+
+The systemd unit needs an absolute path to `s25-watch.sh`, so `install.sh` writes it from
+wherever you cloned rather than shipping a file with someone else's paths baked in. It also
+tells you whether `adb`, `python3` and `scrcpy` are actually present before you find out the
+hard way.
+
 ## Scripts
 
 | Script | What it does |
 |---|---|
 | `s25.sh` | open the mirror — USB if authorized, else Wi-Fi |
 | `s25-unlock.sh` | type the PIN over adb, with no video involved |
+| `s25-tap.sh` | find and tap buttons on a screen that renders black |
 | `s25-watch.sh` | keep a mirror open whenever the phone is connected; relaunch when it drops |
 | `s25-backup.sh` | resumable pull of shared storage to `~/s25-backup` |
 | `s25-common.sh` | shared device selection (sourced, not run) |
+| `lib/parse-ui.py` | the tap-matching rules, kept separate so they are testable |
+
+## Tests
+
+```bash
+tests/run.sh            # no phone required
+```
+
+Covers the tap-matching rules against a fixture dump — dedupe of nested duplicate labels,
+refusing genuinely ambiguous matches, `-a` override, case-insensitive substring matching,
+malformed bounds, and telling "nothing on screen" apart from "the dump failed". Plus
+`bash -n` on every script and a check that no serial, home path or IMEI has crept in.
+
+These rules decide where a tap lands on a screen nobody can see, which is exactly the kind
+of thing that should not be verified by eye.
 
 ### Mirroring
 
