@@ -141,6 +141,35 @@ Two things make this work where a naive version doesn't:
   adb shell dumpsys window | grep -m1 isKeyguardShowing     # true = locked
   ```
 
+## Tapping buttons you cannot see
+
+`FLAG_SECURE` blocks screen *capture*, not the **accessibility tree**. When an app renders as a
+black rectangle in the mirror, its buttons are still fully readable — with exact pixel bounds —
+through `uiautomator`. That's the same channel a screen reader uses.
+
+```bash
+./s25-tap.sh                 # list every labelled element and where it is
+./s25-tap.sh "Use PIN"       # tap the one matching that text
+./s25-tap.sh -c              # clickable elements only
+./s25-tap.sh -a "Unlock"     # tap the first match instead of stopping on ambiguity
+```
+
+Matching is case-insensitive substring. On multiple distinct matches it lists them and **stops
+rather than guessing** — tapping the wrong button on a payments screen isn't a recoverable
+mistake. Labels repeated at the same coordinates (a node and its parent) collapse to one entry.
+
+This is what gets you through app locks on a dead panel. A real example — PhonePe, which blanks
+its lock screen: the sequence is an invisible *"Unlock now"* button, then the system biometric
+prompt, then an invisible *"Use PIN"*, and only then a credential screen that accepts keycodes.
+None of it is visible in the mirror; all of it is visible to `s25-tap.sh`.
+
+Note that **app-drawn PIN pads ignore `input keyevent` entirely** — they're custom views, not text
+fields. Only the *system* credential screen takes keycodes. For an app keypad you must tap
+coordinates.
+
+The dump can contain whatever is on screen, so the script deletes it from both the phone and the
+laptop on exit, and `*ui*.xml` is gitignored.
+
 ### Unattended unlocking
 
 ```bash
