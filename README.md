@@ -56,6 +56,9 @@ hard way.
 | `s25-tap.sh` | find and tap buttons on a screen that renders black |
 | `s25-watch.sh` | keep a mirror open whenever the phone is connected; relaunch when it drops |
 | `s25-backup.sh` | resumable pull of shared storage to `~/s25-backup` |
+| `s25-tap.sh` | read the accessibility tree and tap a control by its label |
+| `s25-views.sh` | locate controls by resource id when the accessibility tree is unavailable |
+| `s25-shell.sh` | a real Linux shell on the phone, via Termux |
 | `s25-common.sh` | shared device selection (sourced, not run) |
 | `lib/parse-ui.py` | the tap-matching rules, kept separate so they are testable |
 
@@ -201,6 +204,17 @@ coordinates.
 The dump can contain whatever is on screen, so the script deletes it from both the phone and the
 laptop on exit, and `*ui*.xml` is gitignored.
 
+`uiautomator` has one hard failure mode: a screen that never stops animating never goes idle, so
+the dump never comes — and it **exits 0 while producing no file**. `s25-views.sh` reads the view
+hierarchy out of `dumpsys activity top` instead, which is immune to both that and `FLAG_SECURE`:
+
+```bash
+./s25-views.sh -c            # every clickable view, with absolute tap coordinates
+```
+
+It gives ids and bounds rather than text. See [Reading a screen you cannot
+see](docs/reading-the-screen.md) for when to reach for which channel.
+
 ### Unattended unlocking
 
 ```bash
@@ -216,6 +230,23 @@ work — the variable never reaches the unit, which is why the drop-in exists.
 Worth doing even with `svc power stayon true` set: stayon only prevents the *next* lock. If the
 phone is already locked when you plug in, you still get a black window on first connect unless
 something unlocks it.
+
+## A Linux shell on the phone
+
+`adb shell` gives you Android's stripped toolbox as uid 2000. Termux gives you `bash`, `apt`,
+`git`, `python` and a writable prefix — no root — and `s25-shell.sh` reaches into it from the
+laptop, with no mirror and no phone screen involved:
+
+```bash
+./s25-shell.sh                   # interactive bash on the phone
+./s25-shell.sh 'apt update'      # or one command at a time
+```
+
+Termux's userland sits in private app storage that adb's uid cannot read; the script gets in via
+`run-as`, which works because the GitHub builds of Termux are debuggable. Installing it has two
+traps worth knowing before you start — Play Protect blocks the APK with no "Install anyway"
+button, and `--bypass-low-target-sdk-block` is not the flag that helps. Both are covered in
+[A Linux shell on the phone](docs/termux-shell.md).
 
 ## Connection problems
 
