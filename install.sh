@@ -43,7 +43,7 @@ echo "checking:"
 command -v adb >/dev/null || die "adb not found. Fedora: sudo dnf install android-tools"
 good "adb $(adb version 2>/dev/null | head -1 | grep -oE '[0-9]+\.[0-9.]+' | head -1)"
 
-command -v python3 >/dev/null || die "python3 not found (needed by s25-tap.sh)"
+command -v python3 >/dev/null || die "python3 not found (needed by s25-tap.sh and s25-views.sh)"
 good "python3 $(python3 -V 2>&1 | awk '{print $2}')"
 
 # Either bundled next to the scripts, or on PATH, or pointed at by $SCRCPY.

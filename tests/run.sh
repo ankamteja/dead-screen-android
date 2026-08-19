@@ -10,7 +10,9 @@ set -u
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(dirname "$HERE")"
 PARSE="$ROOT/lib/parse-ui.py"
+PARSEV="$ROOT/lib/parse-views.py"
 FIX="$HERE/fixtures/screen.xml"
+FIXV="$HERE/fixtures/dumpsys-top.txt"
 
 pass=0; fail=0
 
@@ -68,6 +70,42 @@ grep -qF "PhonePe is locked" <<<"$out" \
 assert "labelless screen says so"               1 "nothing with a label" -- "$HERE/fixtures/empty.xml" "" 0 0
 assert "unparseable dump says so instead"       1 "could not parse"      -- /dev/null "" 0 0
 assert "missing file does not traceback"        1 "could not parse"      -- "$HERE/fixtures/nope.xml" "" 0 0
+
+echo "view parser:"
+
+# assert_views <name> <expected-rc> <substring> -- <parse-views args...>
+assert_views() {
+    local name="$1" want_rc="$2" want_out="$3"; shift 4
+    local out rc
+    out=$(python3 "$PARSEV" "$@" 2>&1); rc=$?
+    if [ "$rc" != "$want_rc" ]; then
+        bad "$name" "exit $rc, wanted $want_rc -- $out"
+    elif [ -n "$want_out" ] && ! grep -qF -- "$want_out" <<<"$out"; then
+        bad "$name" "output missing '$want_out' -- $out"
+    else
+        ok "$name"
+    fi
+}
+
+# The whole point of this parser: dumpsys prints bounds relative to the PARENT, so a
+# menu item at 936,12 inside a toolbar at 0,103 is really at 936,115 and taps at
+# 1008,187. Reading the raw numbers as absolute puts every tap in the wrong place.
+assert_views "bounds resolve against ancestors" 0 "tap 1008,187" -- com.example.app "" 0 "$FIXV"
+
+# A dump holds every top activity. Bleeding views from another package in would offer
+# tap targets that are not on screen.
+assert_views "other packages excluded"          1 "nothing matched" -- com.example.app other_app_button 0 "$FIXV"
+assert_views "named package is readable"        0 "other_app_button" -- com.example.other "" 0 "$FIXV"
+
+# GONE views and collapsed (zero-size) views are not tappable; listing them invites a
+# tap into dead space that silently does nothing.
+assert_views "invisible views excluded"         1 "nothing matched" -- com.example.app hidden_logo 0 "$FIXV"
+assert_views "zero-size views excluded"         1 "nothing matched" -- com.example.app collapsed_button 0 "$FIXV"
+
+assert_views "filter matches id substring"      0 "title_text"   -- com.example.app title 0 "$FIXV"
+assert_views "clickonly drops static text"      1 "nothing matched" -- com.example.app title 1 "$FIXV"
+assert_views "absent package says so"           1 "no top activity" -- com.example.nope "" 0 "$FIXV"
+assert_views "empty dump does not traceback"    1 "no top activity" -- com.example.app "" 0 /dev/null
 
 echo "syntax:"
 for f in "$ROOT"/*.sh "$HERE"/run.sh; do

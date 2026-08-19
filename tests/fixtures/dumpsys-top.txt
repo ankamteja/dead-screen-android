@@ -1,0 +1,18 @@
+ACTIVITY com.example.app/.MainActivity a1b2c3 pid=1234 userId=0 displayId=0(type=INTERNAL)
+  Local Activity 11aa22 State:
+    mResumed=true mStopped=false mFinished=false
+    View Hierarchy:
+      com.android.internal.policy.DecorView{a0a0a0 V.E...... ........ 0,0-1080,2340}
+        android.widget.LinearLayout{b1b1b1 V.E...... ........ 0,0-1080,2340}
+          androidx.appcompat.widget.Toolbar{c2c2c2 V.E...... ........ 0,103-1080,271 #7f090541 app:id/toolbar}
+            androidx.appcompat.view.menu.ActionMenuItemView{d3d3d3 VFED..C.. ........ 936,12-1080,156 #7f090356 app:id/menu_settings}
+          android.widget.TextView{e4e4e4 V.ED..... ........ 48,600-1032,700 #7f090095 app:id/title_text}
+          android.widget.ImageView{f5f5f5 G.ED..... ......I. 0,0-0,0 #7f090512 app:id/hidden_logo}
+          android.widget.Button{a6a6a6 VFED..C.. ........ 0,0-0,0 #7f090513 app:id/collapsed_button}
+    Added Fragments:
+      #0: DetailFragment{aabbcc} (11111111-2222-3333-4444-555555555555 id=0x7f0901eb)
+  ACTIVITY com.example.other/.OtherActivity b2c3d4 pid=5678 userId=0 displayId=0(type=INTERNAL)
+    Local Activity 33cc44 State:
+      View Hierarchy:
+        com.android.internal.policy.DecorView{b0b0b0 V.E...... ........ 0,0-1080,2340}
+          android.widget.Button{c0c0c0 VFED..C.. ........ 10,20-110,120 #7f090777 app:id/other_app_button}
