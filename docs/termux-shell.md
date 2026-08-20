@@ -142,7 +142,28 @@ If you would rather not depend on that, run `sshd` inside Termux and reach it ov
 ./s25-ssh.sh              # a shell on the phone
 ./s25-ssh.sh -t           # attach the long-lived tmux session instead
 ./s25-ssh.sh 'uptime'     # run one command and exit
+./s25-ssh.sh -u           # force the USB tunnel
 ```
+
+It tries Wi-Fi first and falls back to the cable. When the phone is reachable on the network there
+is no reason to tunnel, and going direct means the cable can come out entirely -- which is worth
+something on a phone kept plugged in purely for adb, since a battery held at charge all day is a
+battery aging for no reason. Discovery order is `$S25_HOST`, then the address cached in
+`~/.cache/s25-ip`, then asking the phone over USB while it is still attached and caching the
+answer for later. "Reachable" means something is listening on port 8022, not that the host
+answers ping -- a phone with no sshd running is not usable, and finding that out immediately beats
+a 30-second timeout.
+
+Two things decide whether the Wi-Fi path works at all, and neither is about the phone:
+
+- **Client isolation.** Many guest, campus and hotel networks stop clients talking to each other,
+  and then only the USB tunnel works. Test with a ping in either direction before assuming.
+- **A DHCP lease that moves.** The cached address goes stale on reconnect; plug in once and the
+  script re-learns it. A DHCP reservation on your own router avoids this permanently.
+
+Note the phone's sshd listens on every interface, so on a shared network the port is visible to
+every other host on it. Key-only auth is what makes that acceptable -- there is no password to
+guess. Do not undo `PasswordAuthentication no`.
 
 ### Why it tunnels rather than dialling the phone directly
 
