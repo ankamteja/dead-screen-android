@@ -14,6 +14,9 @@ black](#why-the-lock-screen-is-black)).
 
 Tested on a Galaxy S25 (`SM-S931B`, Android 16) with Fedora 43 and scrcpy 4.1.
 
+New here, or coming back to it after a while? [The whole workflow, end to end](docs/workflow.md)
+explains the five layers this is built on and how to tell which one is broken.
+
 ## Requirements
 
 - `adb` (Fedora: `sudo dnf install android-tools`)
@@ -59,6 +62,7 @@ hard way.
 | `s25-tap.sh` | read the accessibility tree and tap a control by its label |
 | `s25-views.sh` | locate controls by resource id when the accessibility tree is unavailable |
 | `s25-shell.sh` | a real Linux shell on the phone, via Termux |
+| `s25-ssh.sh` | ssh into that shell over the USB cable, tmux and all |
 | `s25-common.sh` | shared device selection (sourced, not run) |
 | `lib/parse-ui.py` | the tap-matching rules, kept separate so they are testable |
 
@@ -240,6 +244,7 @@ laptop, with no mirror and no phone screen involved:
 ```bash
 ./s25-shell.sh                   # interactive bash on the phone
 ./s25-shell.sh 'apt update'      # or one command at a time
+./s25-ssh.sh -t                  # or ssh in over the cable, into a persistent tmux
 ```
 
 Termux's userland sits in private app storage that adb's uid cannot read; the script gets in via

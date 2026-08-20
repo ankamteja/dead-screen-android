@@ -135,18 +135,91 @@ run-as: package not debuggable: com.termux
 So if you ever "upgrade" Termux by installing it from F-Droid, this shell stops working and the
 script tells you why. Nothing else about Termux changes — only this back door.
 
-If you would rather not depend on that, run `sshd` inside Termux instead and forward it over USB:
+If you would rather not depend on that, run `sshd` inside Termux and reach it over the cable.
+`s25-ssh.sh` does the whole dance:
 
 ```bash
-./s25-shell.sh 'pkg install -y openssh && passwd'   # set a password first
-./s25-shell.sh 'sshd'
-adb forward tcp:8022 tcp:8022
-ssh -p 8022 localhost
+./s25-ssh.sh              # a shell on the phone
+./s25-ssh.sh -t           # attach the long-lived tmux session instead
+./s25-ssh.sh 'uptime'     # run one command and exit
 ```
 
-That path works with any Termux build, gives you `scp`/`rsync`/`mosh`, and rides over Wi-Fi too.
-It is also a listening service on the phone, so give it a real password and stop it when you are
-done (`pkill sshd`).
+### Why it tunnels rather than dialling the phone directly
+
+There is usually no route to the phone's port 8022. Campus and office Wi-Fi isolate clients from
+each other, mobile data puts you behind CGNAT, and the address changes every time it reconnects
+anyway. `adb forward tcp:8022 tcp:8022` sidesteps all of that by carrying the connection over the
+USB cable that is already attached, so it works on any network and on none.
+
+The forward is state held by the adb connection, not by the phone, so **it disappears on every
+replug** and `ssh` then fails with `connection refused` — which looks alarming and only means the
+tunnel is gone. Re-adding it is most of what the wrapper does; it also starts `sshd` if it is not
+running, and pins the host key to an alias per device so that two phones do not both claim to be
+`localhost:8022` and read as a man-in-the-middle attack on each other.
+
+### Setting it up
+
+Use a key, not a password — `sshd` on a phone is a listening service, and a password is the one
+thing worth not having on it:
+
+```bash
+# from the laptop, with the phone attached
+base64 -w0 ~/.ssh/id_ed25519.pub | \
+  xargs -I{} ./s25-shell.sh "mkdir -p ~/.ssh && chmod 700 ~/.ssh && \
+    echo {} | base64 -d > ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys"
+
+./s25-shell.sh 'sed -i "s/^#*PasswordAuthentication.*/PasswordAuthentication no/" \
+                $PREFIX/etc/ssh/sshd_config'
+./s25-shell.sh 'pkg install -y openssh tmux'
+./s25-ssh.sh 'echo it works'
+```
+
+Note the base64 detour. A key pushed with a plain `echo 'ssh-ed25519 AAAA...'` arrives mangled:
+the text crosses your shell, `adb`'s, and the phone's, and the `\n` is eaten on the way, leaving a
+file `sshd` silently ignores. Anything multi-line — this key, a config file, a boot script — should
+travel as base64 and be decoded on the far side. Verify with `md5sum` on both ends rather than
+trusting that it looked fine.
+
+Heredocs fail the same trip, and more loudly:
+
+```
+sh: can't create temporary file /data/local/shXXXX.tmp: Permission denied
+```
+
+### Surviving a reboot
+
+Termux:Boot runs anything in `~/.termux/boot/` after the phone starts. Install it from the same
+GitHub release channel as Termux itself — **the signatures must match or it cannot talk to
+Termux** — then launch it once, which is what clears Android's "stopped" flag and lets the app
+receive `BOOT_COMPLETED` at all.
+
+```bash
+~/.termux/boot/start-lab.sh
+```
+```sh
+#!/data/data/com.termux/files/usr/bin/sh
+termux-wake-lock                                    # or Android suspends the CPU mid-job
+sshd
+tmux has-session -t lab 2>/dev/null || tmux new-session -d -s lab
+```
+
+Keep both apps out of Doze while you are at it:
+
+```bash
+adb shell dumpsys deviceidle whitelist +com.termux
+adb shell dumpsys deviceidle whitelist +com.termux.boot
+```
+
+**Do not casually reboot to test this on a phone with a dead panel.** Android blocks USB data until
+the first unlock after boot, and an unlock script cannot run without adb — so a reboot costs you
+every remote route into the phone until someone unlocks it by touch. Verify the receiver is armed
+instead, which is checkable without rebooting:
+
+```bash
+adb shell dumpsys package com.termux.boot | grep -E 'RECEIVE_BOOT_COMPLETED: granted|stopped='
+```
+
+`granted=true` and `stopped=false` together mean the broadcast will be delivered.
 
 ## Everyday use
 
